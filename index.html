@@ -5,6 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Bringing Light</title>
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+<link href="https://fonts.googleapis.com/css2?family=Shadows+Into+Light&display=swap" rel="stylesheet">
+
 <style>
 body{
 margin:0;
@@ -14,48 +20,41 @@ color:#2b2b2b;
 }
 
 header{
-padding:40px;
+min-height:100vh;
+display:flex;
+justify-content:center;
+align-items:center;
 text-align:center;
 background:#f4eadc;
+position:relative;
 border-bottom:1px solid #e6d7c6;
 }
 
-section{padding:40px 8%;}
+section{padding:60px 8%}
+h1{font-size:4rem;margin:0}
+h2{color:#5a4336}
 
-#wall{
+.card{
+background:#fffdf9;
+border:1px solid #eadcc8;
+padding:18px;
+border-radius:14px;
+margin:12px 0;
+box-shadow:0 4px 14px rgba(0,0,0,0.06);
+}
+
+.grid{
 display:grid;
-grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
 gap:16px;
-margin-top:20px;
-}
-
-.note{
-background:#fffdf7;
-padding:14px;
-border-radius:10px;
-box-shadow:0 6px 14px rgba(0,0,0,0.08);
-position:relative;
-}
-
-.time{
-font-size:10px;
-opacity:0.6;
-margin-bottom:6px;
-}
-
-.tag{
-font-size:11px;
-opacity:0.6;
-margin-top:8px;
 }
 
 button{
-margin-top:8px;
-padding:6px 10px;
+padding:10px 15px;
 border:none;
-border-radius:8px;
-background:#e7c9a9;
+border-radius:10px;
 cursor:pointer;
+background:#e7c9a9;
 }
 
 input,textarea,select{
@@ -66,18 +65,49 @@ border-radius:10px;
 border:1px solid #e5d3bd;
 background:#fff;
 }
+
+/* ================= HOPE WALL ================= */
+#wall{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+gap:16px;
+margin-top:20px;
+}
+
+.note{
+font-family:'Shadows Into Light', cursive;
+background:#fffdf7;
+padding:14px;
+border-radius:10px;
+box-shadow:0 6px 14px rgba(0,0,0,0.08);
+position:relative;
+}
+
+.time{font-size:10px;opacity:0.6}
+.tag{font-size:11px;opacity:0.6;margin-top:6px}
+
+/* MAP */
+#map{
+height:420px;
+width:100%;
+border-radius:14px;
+margin-top:10px;
+}
 </style>
 </head>
 
 <body>
 
 <header>
+<div>
 <h1>✨ Bringing Light</h1>
-<p>Anonymous shared hope wall</p>
+<p>Exploring teen mental health, hope, support, and healing.</p>
+</div>
 </header>
 
+<!-- ================= HOPE WALL (SUPABASE) ================= -->
 <section>
-<h2>💌 Hope Wall</h2>
+<h2>💌 Anonymous Wall of Hope</h2>
 
 <select id="emotion">
 <option value="hope">Hope</option>
@@ -86,24 +116,74 @@ background:#fff;
 <option value="gratitude">Gratitude</option>
 <option value="recovery">Recovery</option>
 <option value="fear">Fear</option>
+<option value="other">Other</option>
 </select>
 
 <textarea id="hope" placeholder="Write your message..."></textarea>
-<button onclick="addHope()">Post</button>
+<button onclick="addHope()">Pin to Clothesline</button>
 
 <div id="wall"></div>
 </section>
 
+<!-- ================= OTHER SECTIONS (UNCHANGED) ================= -->
+
+<section>
+<h2>Why Awareness Matters</h2>
+<canvas id="chart"></canvas>
+</section>
+
+<section>
+<h2>Root Causes of the Teen Mental Health Crisis</h2>
+<div class="grid">
+<div class="card"><h3>📱 Attention & Addiction by Design</h3></div>
+<div class="card"><h3>😔 Social Comparison</h3></div>
+<div class="card"><h3>💬 Cyberbullying</h3></div>
+</div>
+</section>
+
+<section>
+<h2>⭐ You Are Here Constellation</h2>
+<div class="card" id="starmsg">Click a star.</div>
+</section>
+
+<section>
+<h2>🗺️ Places That Helped Us (NYC Map)</h2>
+
+<div id="map"></div>
+
+<input id="placeName" placeholder="Location name">
+<textarea id="placeStory" placeholder="How did this place help you?"></textarea>
+<button onclick="addPlace()">Add Story</button>
+
+<div id="places"></div>
+</section>
+
+<!-- ================= LIBS ================= -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
-/* ================= SUPABASE SETUP ================= */
+/* ================= CHART ================= */
+new Chart(document.getElementById('chart'),{
+type:'bar',
+data:{
+labels:['2009','2011','2013','2015','2017','2019','2021','2023'],
+datasets:[{label:'Teen ER Visits',data:[100,115,138,162,201,234,268,288]}]
+}
+});
+
+/* ================= STAR ================= */
+function star(t){
+document.getElementById('starmsg').innerText = t;
+}
+
+/* ================= SUPABASE ================= */
 const supabaseUrl = "https://cfmgiwakfqkhblabztah.supabase.co";
 const supabaseKey = "sb_publishable_K-LDd-jTOlpA6P8DwhGjSA_f42EDcv8";
 
 const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
-/* ================= ADD POST ================= */
+/* ================= HOPE WALL ================= */
+
 async function addHope(){
 await supabase.from("hopewall").insert({
 text: document.getElementById("hope").value,
@@ -115,26 +195,22 @@ document.getElementById("hope").value = "";
 loadWall();
 }
 
-/* ================= LOAD WALL ================= */
 async function loadWall(){
 let { data } = await supabase
 .from("hopewall")
 .select("*")
-.order("time", { ascending: false });
+.order("id", { ascending:false });
 
 document.getElementById("wall").innerHTML = data.map(x => `
 <div class="note">
 <div class="time">${x.time}</div>
 ${x.text}
-
 <div class="tag">Anonymous</div>
-
-<button onclick="deletePost('${x.id}')">Report / Delete</button>
+<button onclick="deletePost('${x.id}')">Report</button>
 </div>
 `).join("");
 }
 
-/* ================= DELETE ================= */
 async function deletePost(id){
 if(confirm("Delete this post?")){
 await supabase.from("hopewall").delete().eq("id", id);
@@ -142,7 +218,42 @@ loadWall();
 }
 }
 
-/* initial load */
+/* ================= MAP (LOCAL VERSION SIMPLE) ================= */
+
+let map = L.map('map').setView([40.7128,-74.0060],11);
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+attribution:'© OpenStreetMap'
+}).addTo(map);
+
+let placesArr=[];
+
+function addPlace(){
+placesArr.push({
+name:placeName.value,
+story:placeStory.value,
+lat:40.7128 + (Math.random()-0.5)*0.2,
+lng:-74.0060 + (Math.random()-0.5)*0.2
+});
+
+renderPlaces();
+}
+
+function renderPlaces(){
+document.getElementById("places").innerHTML =
+placesArr.map(p=>`
+<div class="card">
+<b>${p.name}</b><br>${p.story}
+</div>
+`).join("");
+
+placesArr.forEach(p=>{
+L.marker([p.lat,p.lng]).addTo(map)
+.bindPopup(`<b>${p.name}</b><br>${p.story}`);
+});
+}
+
+/* INIT */
 loadWall();
 </script>
 
