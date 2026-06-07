@@ -12,6 +12,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Shadows+Into+Light&display=swap" rel="stylesheet">
 
 <style>
+
+/* ================= BASE ================= */
 body{
 margin:0;
 font-family:Segoe UI,sans-serif;
@@ -19,6 +21,7 @@ background:#f6f1e8;
 color:#2b2b2b;
 }
 
+/* ================= HEADER (NO GRADIENTS) ================= */
 header{
 min-height:100vh;
 display:flex;
@@ -30,6 +33,25 @@ position:relative;
 border-bottom:1px solid #e6d7c6;
 }
 
+/* subtle string lights (NOT gradient-based) */
+header::before{
+content:"";
+position:absolute;
+top:30px;
+left:0;
+right:0;
+height:80px;
+background:
+radial-gradient(circle at 10% 50%, #ffd36e 5px, transparent 6px),
+radial-gradient(circle at 25% 40%, #fff0a6 5px, transparent 6px),
+radial-gradient(circle at 40% 60%, #ffd36e 5px, transparent 6px),
+radial-gradient(circle at 55% 45%, #fff0a6 5px, transparent 6px),
+radial-gradient(circle at 70% 55%, #ffd36e 5px, transparent 6px),
+radial-gradient(circle at 85% 45%, #fff0a6 5px, transparent 6px);
+opacity:0.8;
+}
+
+/* ================= LAYOUT ================= */
 section{padding:60px 8%}
 h1{font-size:4rem;margin:0}
 h2{color:#5a4336}
@@ -66,33 +88,91 @@ border:1px solid #e5d3bd;
 background:#fff;
 }
 
-/* ================= HOPE WALL ================= */
-#wall{
-display:grid;
-grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
-gap:16px;
-margin-top:20px;
+/* ================= HOPE WALL (CLOTHESPIN STYLE) ================= */
+#hopeSection{
+background:#f6f1e8;
 }
 
-.note{
-font-family:'Shadows Into Light', cursive;
-background:#fffdf7;
-padding:14px;
-border-radius:10px;
-box-shadow:0 6px 14px rgba(0,0,0,0.08);
+/* clothesline */
+.noteBoard{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+gap:24px;
+margin-top:30px;
 position:relative;
 }
 
-.time{font-size:10px;opacity:0.6}
-.tag{font-size:11px;opacity:0.6;margin-top:6px}
+/* line */
+.noteBoard::before{
+content:"";
+position:absolute;
+top:-10px;
+left:0;
+right:0;
+height:2px;
+background:#c8b8a6;
+}
 
-/* MAP */
+/* note */
+.note{
+font-family:'Shadows Into Light', cursive;
+background:#fffdf7;
+padding:16px;
+border-radius:10px;
+position:relative;
+box-shadow:0 6px 14px rgba(0,0,0,0.08);
+transform:rotate(var(--r));
+}
+
+/* clothespin */
+.note::before{
+content:"📎";
+position:absolute;
+top:-18px;
+left:50%;
+transform:translateX(-50%);
+font-size:18px;
+}
+
+/* hover warmth */
+.note:hover{
+box-shadow:0 10px 24px rgba(0,0,0,0.12);
+transform:scale(1.02) rotate(var(--r));
+}
+
+/* emotions (soft ink tint, not loud colors) */
+.hope{border-left:4px solid #e6d36a;}
+.love{border-left:4px solid #e6a6c8;}
+.pain{border-left:4px solid #a6c8e6;}
+.gratitude{border-left:4px solid #a6e6b0;}
+.recovery{border-left:4px solid #c2a6e6;}
+.fear{border-left:4px solid #e6b88a;}
+.other{border-left:4px solid #cfcfcf;}
+
+.tag{
+position:absolute;
+bottom:8px;
+right:10px;
+font-size:0.75rem;
+opacity:0.6;
+}
+
+.time{
+position:absolute;
+top:8px;
+right:10px;
+font-size:0.65rem;
+opacity:0.5;
+}
+
+/* ================= MAP ================= */
 #map{
 height:420px;
 width:100%;
 border-radius:14px;
 margin-top:10px;
 }
+
 </style>
 </head>
 
@@ -105,8 +185,9 @@ margin-top:10px;
 </div>
 </header>
 
-<!-- ================= HOPE WALL (SUPABASE) ================= -->
-<section>
+<!-- ================= HOPE WALL ================= -->
+<section id="hopeSection">
+
 <h2>💌 Anonymous Wall of Hope</h2>
 
 <select id="emotion">
@@ -122,7 +203,31 @@ margin-top:10px;
 <textarea id="hope" placeholder="Write your message..."></textarea>
 <button onclick="addHope()">Pin to Clothesline</button>
 
-<div id="wall"></div>
+<div id="wall" class="noteBoard"></div>
+</section>
+
+<!-- ================= MAP ================= -->
+<section>
+
+<h2>🗺️ Places That Helped Us (NYC Map)</h2>
+
+<div id="map"></div>
+
+<select id="placeType">
+<option>Hospital</option>
+<option>School</option>
+<option>Park</option>
+<option>Library</option>
+<option>Home</option>
+<option>Community Center</option>
+<option>Other</option>
+</select>
+
+<input id="placeName" placeholder="Location name">
+<textarea id="placeStory" placeholder="How did this place help you?"></textarea>
+<button onclick="addPlace()">Add Story</button>
+
+<div id="places"></div>
 </section>
 
 <!-- ================= OTHER SECTIONS (UNCHANGED) ================= -->
@@ -135,34 +240,66 @@ margin-top:10px;
 <section>
 <h2>Root Causes of the Teen Mental Health Crisis</h2>
 <div class="grid">
-<div class="card"><h3>📱 Attention & Addiction by Design</h3></div>
-<div class="card"><h3>😔 Social Comparison</h3></div>
-<div class="card"><h3>💬 Cyberbullying</h3></div>
+<div class="card"><h3>📱 Attention & Addiction by Design</h3><p>Notifications, likes, streaks, and endless scrolling.</p></div>
+<div class="card"><h3>😔 Social Comparison</h3><p>Curated online lives distort self-image.</p></div>
+<div class="card"><h3>💬 Cyberbullying</h3><p>Online harm can linger long after it happens.</p></div>
+</div>
+</section>
+
+<section>
+<h2>Who Is Affected?</h2>
+<div class="grid">
+<div class="card"><h3>Teenagers</h3><p>Mental health, academics, relationships.</p></div>
+<div class="card"><h3>Families</h3><p>Supporting loved ones.</p></div>
+<div class="card"><h3>Schools</h3><p>Counseling and wellness programs.</p></div>
 </div>
 </section>
 
 <section>
 <h2>⭐ You Are Here Constellation</h2>
+<div>
+<span class="star" onclick="star('Asking for help is strength.')">⭐</span>
+<span class="star" onclick="star('Social media is not the full story.')">⭐</span>
+<span class="star" onclick="star('One conversation matters.')">⭐</span>
+<span class="star" onclick="star('Your worth is not online.')">⭐</span>
+<span class="star" onclick="star('Healing is not linear.')">⭐</span>
+</div>
 <div class="card" id="starmsg">Click a star.</div>
 </section>
 
 <section>
-<h2>🗺️ Places That Helped Us (NYC Map)</h2>
-
-<div id="map"></div>
-
-<input id="placeName" placeholder="Location name">
-<textarea id="placeStory" placeholder="How did this place help you?"></textarea>
-<button onclick="addPlace()">Add Story</button>
-
-<div id="places"></div>
+<h2>📚 Mental Health Bookshelf</h2>
+<div class="grid">
+<div class="card"><b>Feeling Good</b></div>
+<div class="card"><b>The Body Keeps the Score</b></div>
+<div class="card"><b>Reasons to Stay Alive</b></div>
+<div class="card"><b>Maybe You Should Talk to Someone</b></div>
+</div>
 </section>
 
-<!-- ================= LIBS ================= -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<section>
+<h2>✉️ Letter to Future Self</h2>
+<textarea id="future"></textarea>
+<button onclick="saveLetter()">Save Letter</button>
+</section>
+
+<section>
+<h2>🕯️ Candle Wall</h2>
+<button onclick="candle()">Light a Candle</button>
+<div id="candles"></div>
+</section>
+
+<section>
+<h2>Final Reflection</h2>
+<div class="card">
+Bringing Light is about small moments of support and healing.<br><br>
+Even when things feel heavy, connection still exists.
+</div>
+</section>
 
 <script>
-/* ================= CHART ================= */
+
+/* CHART */
 new Chart(document.getElementById('chart'),{
 type:'bar',
 data:{
@@ -171,90 +308,116 @@ datasets:[{label:'Teen ER Visits',data:[100,115,138,162,201,234,268,288]}]
 }
 });
 
-/* ================= STAR ================= */
-function star(t){
-document.getElementById('starmsg').innerText = t;
+/* STAR */
+function star(t){document.getElementById('starmsg').innerText=t;}
+
+/* HOPE WALL */
+function randomID(){
+return Math.floor(100 + Math.random()*900);
 }
 
-/* ================= SUPABASE ================= */
-const supabaseUrl = "https://cfmgiwakfqkhblabztah.supabase.co";
-const supabaseKey = "sb_publishable_K-LDd-jTOlpA6P8DwhGjSA_f42EDcv8";
+function addHope(){
+let arr=JSON.parse(localStorage.getItem('hopewall')||'[]');
 
-const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
-
-/* ================= HOPE WALL ================= */
-
-async function addHope(){
-await supabase.from("hopewall").insert({
-text: document.getElementById("hope").value,
-emotion: document.getElementById("emotion").value,
+arr.push({
+text: hope.value,
+emotion: emotion.value,
+id: randomID(),
 time: new Date().toLocaleString()
 });
 
-document.getElementById("hope").value = "";
-loadWall();
+localStorage.setItem('hopewall',JSON.stringify(arr));
+hope.value='';
+renderHope();
 }
 
-async function loadWall(){
-let { data } = await supabase
-.from("hopewall")
-.select("*")
-.order("id", { ascending:false });
+function renderHope(){
+let arr=JSON.parse(localStorage.getItem('hopewall')||'[]');
 
-document.getElementById("wall").innerHTML = data.map(x => `
-<div class="note">
+wall.innerHTML = arr.map(x=>{
+let r = (Math.random()*4 - 2).toFixed(2);
+
+return `
+<div class="note ${x.emotion}" style="--r:${r}deg">
 <div class="time">${x.time}</div>
 ${x.text}
-<div class="tag">Anonymous</div>
-<button onclick="deletePost('${x.id}')">Report</button>
+<div class="tag">Anonymous #${x.id}</div>
 </div>
-`).join("");
+`;
+}).join('');
 }
 
-async function deletePost(id){
-if(confirm("Delete this post?")){
-await supabase.from("hopewall").delete().eq("id", id);
-loadWall();
-}
-}
-
-/* ================= MAP (LOCAL VERSION SIMPLE) ================= */
-
-let map = L.map('map').setView([40.7128,-74.0060],11);
+/* MAP */
+let map = L.map('map').setView([40.7128, -74.0060], 11);
 
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
 attribution:'© OpenStreetMap'
 }).addTo(map);
 
-let placesArr=[];
+function getColor(type){
+if(type==="Hospital") return "red";
+if(type==="Park") return "green";
+if(type==="School") return "blue";
+return "orange";
+}
 
 function addPlace(){
-placesArr.push({
-name:placeName.value,
-story:placeStory.value,
+let arr=JSON.parse(localStorage.getItem('places')||'[]');
+
+arr.push({
+t:placeType.value,
+n:placeName.value,
+s:placeStory.value,
 lat:40.7128 + (Math.random()-0.5)*0.2,
 lng:-74.0060 + (Math.random()-0.5)*0.2
 });
 
+localStorage.setItem('places',JSON.stringify(arr));
 renderPlaces();
+renderMarkers();
 }
 
 function renderPlaces(){
-document.getElementById("places").innerHTML =
-placesArr.map(p=>`
+let arr=JSON.parse(localStorage.getItem('places')||'[]');
+places.innerHTML = arr.map(x=>`
 <div class="card">
-<b>${p.name}</b><br>${p.story}
+<b>${x.t}: ${x.n}</b><br>${x.s}
 </div>
-`).join("");
+`).join('');
+}
 
-placesArr.forEach(p=>{
-L.marker([p.lat,p.lng]).addTo(map)
-.bindPopup(`<b>${p.name}</b><br>${p.story}`);
+function renderMarkers(){
+let arr=JSON.parse(localStorage.getItem('places')||'[]');
+
+arr.forEach(p=>{
+L.circleMarker([p.lat,p.lng],{
+radius:8,
+color:getColor(p.t),
+fillOpacity:0.8
+}).addTo(map);
 });
 }
 
 /* INIT */
-loadWall();
+renderHope();
+renderPlaces();
+renderMarkers();
+
+function saveLetter(){
+localStorage.setItem('futureLetter',future.value);
+alert('Letter saved.');
+}
+
+let c=Number(localStorage.getItem('candles')||0);
+function candle(){
+c++;
+localStorage.setItem('candles',c);
+candles.innerHTML='Candles Lit: '+c;
+}
+candles.innerHTML='Candles Lit: '+c;
+
+future.value=localStorage.getItem('futureLetter')||'';
+
 </script>
 
 </body>
