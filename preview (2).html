@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bringing Light</title>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+<link href="https://fonts.googleapis.com/css2?family=Shadows+Into+Light&display=swap" rel="stylesheet">
+
+<style>
+
+/* ================= BASE ================= */
+body{
+margin:0;
+font-family:Segoe UI,sans-serif;
+background:#f6f1e8;
+color:#2b2b2b;
+}
+
+/* ================= HEADER (NO GRADIENTS) ================= */
+header{
+min-height:100vh;
+display:flex;
+justify-content:center;
+align-items:center;
+text-align:center;
+background:#f4eadc;
+position:relative;
+border-bottom:1px solid #e6d7c6;
+}
+
+/* subtle string lights (NOT gradient-based) */
+header::before{
+content:"";
+position:absolute;
+top:30px;
+left:0;
+right:0;
+height:80px;
+background:
+radial-gradient(circle at 10% 50%, #ffd36e 5px, transparent 6px),
+radial-gradient(circle at 25% 40%, #fff0a6 5px, transparent 6px),
+radial-gradient(circle at 40% 60%, #ffd36e 5px, transparent 6px),
+radial-gradient(circle at 55% 45%, #fff0a6 5px, transparent 6px),
+radial-gradient(circle at 70% 55%, #ffd36e 5px, transparent 6px),
+radial-gradient(circle at 85% 45%, #fff0a6 5px, transparent 6px);
+opacity:0.8;
+}
+
+/* ================= LAYOUT ================= */
+section{padding:60px 8%}
+h1{font-size:4rem;margin:0}
+h2{color:#5a4336}
+
+.card{
+background:#fffdf9;
+border:1px solid #eadcc8;
+padding:18px;
+border-radius:14px;
+margin:12px 0;
+box-shadow:0 4px 14px rgba(0,0,0,0.06);
+}
+
+.grid{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+gap:16px;
+}
+
+button{
+padding:10px 15px;
+border:none;
+border-radius:10px;
+cursor:pointer;
+background:#e7c9a9;
+}
+
+input,textarea,select{
+width:100%;
+padding:10px;
+margin:8px 0;
+border-radius:10px;
+border:1px solid #e5d3bd;
+background:#fff;
+}
+
+/* ================= HOPE WALL (CLOTHESPIN STYLE) ================= */
+#hopeSection{
+background:#f6f1e8;
+}
+
+/* clothesline */
+.noteBoard{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+gap:24px;
+margin-top:30px;
+position:relative;
+}
+
+/* line */
+.noteBoard::before{
+content:"";
+position:absolute;
+top:-10px;
+left:0;
+right:0;
+height:2px;
+background:#c8b8a6;
+}
+
+/* note */
+.note{
+font-family:'Shadows Into Light', cursive;
+background:#fffdf7;
+padding:16px;
+border-radius:10px;
+position:relative;
+box-shadow:0 6px 14px rgba(0,0,0,0.08);
+transform:rotate(var(--r));
+}
+
+/* clothespin */
+.note::before{
+content:"📎";
+position:absolute;
+top:-18px;
+left:50%;
+transform:translateX(-50%);
+font-size:18px;
+}
+
+/* hover warmth */
+.note:hover{
+box-shadow:0 10px 24px rgba(0,0,0,0.12);
+transform:scale(1.02) rotate(var(--r));
+}
+
+/* emotions (soft ink tint, not loud colors) */
+.hope{border-left:4px solid #e6d36a;}
+.love{border-left:4px solid #e6a6c8;}
+.pain{border-left:4px solid #a6c8e6;}
+.gratitude{border-left:4px solid #a6e6b0;}
+.recovery{border-left:4px solid #c2a6e6;}
+.fear{border-left:4px solid #e6b88a;}
+.other{border-left:4px solid #cfcfcf;}
+
+.tag{
+position:absolute;
+bottom:8px;
+right:10px;
+font-size:0.75rem;
+opacity:0.6;
+}
+
+.time{
+position:absolute;
+top:8px;
+right:10px;
+font-size:0.65rem;
+opacity:0.5;
+}
+
+/* ================= MAP ================= */
+#map{
+height:420px;
+width:100%;
+border-radius:14px;
+margin-top:10px;
+}
+
+</style>
+
+<style>
+body{font-family:'Crimson Text',serif!important;background:#f4efe7!important;}
+header{padding:80px 8%!important;min-height:auto!important;text-align:left!important;background:#efe3d4!important;}
+h1{font-size:3.4rem!important;}
+section{padding:70px 8%!important;}
+.sectionLead{max-width:700px;color:#65584d;font-size:1.1rem;}
+.communityNote{background:#fff8ee;border-left:4px solid #9f7b58;padding:18px;margin:20px 0 30px;max-width:650px;}
+#hopeSection{background:#c9a57c!important;}
+.noteBoard{
+padding:40px;
+border-radius:10px;
+background:#c9a57c;
+box-shadow:inset 0 0 30px rgba(0,0,0,.12);
+}
+.note{
+background:#fffaf2!important;
+border-radius:2px!important;
+min-height:120px;
+}
+.note::before{
+content:"";
+width:12px;height:12px;
+background:#a03d3d;
+border-radius:50%;
+position:absolute;
+top:-6px;left:50%;
+transform:translateX(-50%);
+}
+.bookshelf{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
+gap:12px;
+}
+.book{
+height:150px;
+display:flex;
+align-items:center;
+justify-content:center;
+text-align:center;
+padding:12px;
+color:white;
+font-weight:bold;
+border-radius:3px;
+background:#8b6b4d;
+box-shadow:0 4px 10px rgba(0,0,0,.15);
+}
+.starArea{
+background:#2f3440;
+padding:35px;
+border-radius:10px;
+text-align:center;
+}
+.star{font-size:2rem;cursor:pointer;margin:10px;}
+#map{
+height:460px!important;
+border:8px solid #f7f0e6!important;
+border-radius:8px!important;
+}
+</style>
+
+</head>
+
+<body>
+
+<header>
+<div>
+<div class='communityNote'>Community Project</div><h1>Bringing Light</h1>
+<p>Exploring teen mental health, hope, support, and healing.</p>
+</div>
+</header>
+
+<!-- ================= HOPE WALL ================= -->
+<section id="hopeSection">
+
+<h2>Anonymous Wall of Hope</h2><p class='sectionLead'>Leave a note for someone you'll never meet. Read a note from someone who understands.</p><div class='communityNote'><strong>Community Note</strong><br>Share a memory, a reminder, a safe place, or simply a reason to keep going.</div>
+
+<select id="emotion">
+<option value="hope">Hope</option>
+<option value="love">Love</option>
+<option value="pain">Pain</option>
+<option value="gratitude">Gratitude</option>
+<option value="recovery">Recovery</option>
+<option value="fear">Fear</option>
+<option value="other">Other</option>
+</select>
+
+<textarea id="hope" placeholder="Write your message..."></textarea>
+<button onclick="addHope()">Pin to Clothesline</button>
+
+<div id="wall" class="noteBoard"></div>
+</section>
+
+<!-- ================= MAP ================= -->
+<section>
+
+<h2>Places of Comfort Around New York City</h2><p class='sectionLead'>A library, a counselor's office, a park bench, a hospital, or somewhere that simply felt safe.</p>
+
+<div id="map"></div>
+
+<select id="placeType">
+<option>Hospital</option>
+<option>School</option>
+<option>Park</option>
+<option>Library</option>
+<option>Home</option>
+<option>Community Center</option>
+<option>Other</option>
+</select>
+
+<input id="placeName" placeholder="Location name">
+<textarea id="placeStory" placeholder="How did this place help you?"></textarea>
+<button onclick="addPlace()">Add Story</button>
+
+<div id="places"></div>
+</section>
+
+<!-- ================= OTHER SECTIONS (UNCHANGED) ================= -->
+
+<section>
+<h2>Why Awareness Matters</h2>
+<canvas id="chart"></canvas>
+</section>
+
+<section>
+<h2>Root Causes of the Teen Mental Health Crisis</h2>
+<div class="grid">
+<div class="card"><h3>📱 Attention & Addiction by Design</h3><p>Notifications, likes, streaks, and endless scrolling.</p></div>
+<div class="card"><h3>😔 Social Comparison</h3><p>Curated online lives distort self-image.</p></div>
+<div class="card"><h3>💬 Cyberbullying</h3><p>Online harm can linger long after it happens.</p></div>
+</div>
+</section>
+
+<section>
+<h2>Who Is Affected?</h2>
+<div class="grid">
+<div class="card"><h3>Teenagers</h3><p>Mental health, academics, relationships.</p></div>
+<div class="card"><h3>Families</h3><p>Supporting loved ones.</p></div>
+<div class="card"><h3>Schools</h3><p>Counseling and wellness programs.</p></div>
+</div>
+</section>
+
+<section><h2>Messages in the Stars</h2><div class="starArea"><div>
+<span class="star" onclick="star('Asking for help is strength.')">⭐</span>
+<span class="star" onclick="star('Social media is not the full story.')">⭐</span>
+<span class="star" onclick="star('One conversation matters.')">⭐</span>
+<span class="star" onclick="star('Your worth is not online.')">⭐</span>
+<span class="star" onclick="star('Healing is not linear.')">⭐</span>
+</div>
+<div class="card" id="starmsg">Click a star.</div></div></section>
+
+<section>
+<h2>Recommended Reading</h2>
+<div class="bookshelf">
+<div class="book">Feeling Good</div>
+<div class="book">The Body Keeps the Score</div>
+<div class="book">Reasons to Stay Alive</div>
+<div class="book">Maybe You Should Talk to Someone</div>
+</div>
+</section>
+
+<section>
+<h2>✉️ Letter to Future Self</h2>
+<textarea id="future"></textarea>
+<button onclick="saveLetter()">Save Letter</button>
+</section>
+
+<section>
+<h2>🕯️ Candle Wall</h2>
+<button onclick="candle()">Light a Candle</button>
+<div id="candles"></div>
+</section>
+
+<section>
+<h2>Final Reflection</h2>
+<div class="card">
+Bringing Light is about small moments of support and healing.<br><br>
+Even when things feel heavy, connection still exists.
+</div>
+</section>
+
+<script>
+
+const starterNotes=[
+{text:"You don't have to have everything figured out by 17.",emotion:"hope",id:412,time:"Community Note"},
+{text:"My school counselor changed my life simply by listening.",emotion:"gratitude",id:541,time:"Community Note"},
+{text:"A year ago I didn't think things would get better. They did.",emotion:"recovery",id:673,time:"Community Note"},
+{text:"Someone is probably glad you're here even if they haven't said it.",emotion:"love",id:198,time:"Community Note"},
+{text:"You are allowed to rest without earning it.",emotion:"hope",id:354,time:"Community Note"},
+{text:"Asking for help was terrifying. It was also worth it.",emotion:"recovery",id:822,time:"Community Note"},
+{text:"Prospect Park became my safe place when everything felt loud.",emotion:"gratitude",id:715,time:"Community Note"},
+{text:"One more day turned into one more year.",emotion:"hope",id:111,time:"Community Note"}
+];
+if(!localStorage.getItem('hopewall')){
+localStorage.setItem('hopewall',JSON.stringify(starterNotes));
+}
+
+
+/* CHART */
+new Chart(document.getElementById('chart'),{
+type:'bar',
+data:{
+labels:['2009','2011','2013','2015','2017','2019','2021','2023'],
+datasets:[{label:'Teen ER Visits',data:[100,115,138,162,201,234,268,288]}]
+}
+});
+
+/* STAR */
+function star(t){document.getElementById('starmsg').innerText=t;}
+
+/* HOPE WALL */
+function randomID(){
+return Math.floor(100 + Math.random()*900);
+}
+
+function addHope(){
+let arr=JSON.parse(localStorage.getItem('hopewall')||'[]');
+
+arr.push({
+text: hope.value,
+emotion: emotion.value,
+id: randomID(),
+time: new Date().toLocaleString()
+});
+
+localStorage.setItem('hopewall',JSON.stringify(arr));
+hope.value='';
+renderHope();
+}
+
+function renderHope(){
+let arr=JSON.parse(localStorage.getItem('hopewall')||'[]');
+
+wall.innerHTML = arr.map(x=>{
+let r = (Math.random()*4 - 2).toFixed(2);
+
+return `
+<div class="note ${x.emotion}" style="--r:${r}deg">
+<div class="time">${x.time}</div>
+${x.text}
+<div class="tag">Anonymous #${x.id}</div>
+</div>
+`;
+}).join('');
+}
+
+/* MAP */
+let map = L.map('map').setView([40.7128, -74.0060], 11);
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+attribution:'© OpenStreetMap'
+}).addTo(map);
+
+function getColor(type){
+if(type==="Hospital") return "red";
+if(type==="Park") return "green";
+if(type==="School") return "blue";
+return "orange";
+}
+
+function addPlace(){
+let arr=JSON.parse(localStorage.getItem('places')||'[]');
+
+arr.push({
+t:placeType.value,
+n:placeName.value,
+s:placeStory.value,
+lat:40.7128 + (Math.random()-0.5)*0.2,
+lng:-74.0060 + (Math.random()-0.5)*0.2
+});
+
+localStorage.setItem('places',JSON.stringify(arr));
+renderPlaces();
+renderMarkers();
+}
+
+function renderPlaces(){
+let arr=JSON.parse(localStorage.getItem('places')||'[]');
+places.innerHTML = arr.map(x=>`
+<div class="card">
+<b>${x.t}: ${x.n}</b><br>${x.s}
+</div>
+`).join('');
+}
+
+function renderMarkers(){
+let arr=JSON.parse(localStorage.getItem('places')||'[]');
+
+arr.forEach(p=>{
+L.circleMarker([p.lat,p.lng],{
+radius:8,
+color:getColor(p.t),
+fillOpacity:0.8
+}).addTo(map);
+});
+}
+
+/* INIT */
+renderHope();
+renderPlaces();
+renderMarkers();
+
+function saveLetter(){
+localStorage.setItem('futureLetter',future.value);
+alert('Letter saved.');
+}
+
+let c=Number(localStorage.getItem('candles')||0);
+function candle(){
+c++;
+localStorage.setItem('candles',c);
+candles.innerHTML='Candles Lit: '+c;
+}
+candles.innerHTML='Candles Lit: '+c;
+
+future.value=localStorage.getItem('futureLetter')||'';
+
+</script>
+
+</body>
+</html>
